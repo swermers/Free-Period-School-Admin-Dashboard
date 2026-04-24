@@ -1,0 +1,1877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Free Period — a zero-backend, privacy-first school data dashboard. Upload a CSV, get instant visualizations. Nothing leaves your browser.">
+  <title>Free Period — Local-First School Data Dashboard</title>
+
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <style id="app-styles">
+    /* -----------------------------------------------------------------
+       Free Period — Swiss-minimal design system
+       Tokens: ink / paper / rule / accent. 12-col grid. Inter + JetBrains Mono.
+       ----------------------------------------------------------------- */
+    :root {
+      --ink: #0a0a0a;
+      --ink-2: #2a2a2a;
+      --ink-3: #6a6a6a;
+      --ink-4: #a8a8a8;
+      --rule: #111;
+      --rule-soft: #e5e5e5;
+      --paper: #fafaf7;
+      --paper-2: #ffffff;
+      --accent: #e4002b;
+      --accent-soft: #ffe1e6;
+      --warn: #c46b00;
+      --good: #0b7a3a;
+      --grid-gap: 24px;
+      --col: 8.3333%;
+      --pad-x: clamp(20px, 4vw, 56px);
+      --pad-y: 40px;
+      --font-sans: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      --tracking-tight: -0.02em;
+      --tracking-label: 0.12em;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.45;
+      color: var(--ink);
+      background: var(--paper);
+      font-feature-settings: "ss01","cv11","tnum";
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+    a:hover { color: var(--accent); }
+
+    /* --- Typography ------------------------------------------------- */
+    .h-display {
+      font-size: clamp(44px, 7.5vw, 104px);
+      line-height: 0.92;
+      letter-spacing: var(--tracking-tight);
+      font-weight: 700;
+      margin: 0;
+    }
+    .h-section {
+      font-size: clamp(28px, 3.4vw, 44px);
+      line-height: 1;
+      letter-spacing: var(--tracking-tight);
+      font-weight: 600;
+      margin: 0;
+    }
+    .h-sub {
+      font-size: 17px;
+      line-height: 1.4;
+      font-weight: 500;
+      margin: 0;
+    }
+    .label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: var(--tracking-label);
+      font-weight: 500;
+      color: var(--ink-3);
+    }
+    .num { font-family: var(--font-mono); font-feature-settings: "tnum"; }
+    .mono { font-family: var(--font-mono); }
+
+    /* --- Layout: page frame + section grid -------------------------- */
+    .frame {
+      border-top: 2px solid var(--rule);
+      padding: 0 var(--pad-x);
+    }
+    .section {
+      padding: var(--pad-y) 0;
+      border-top: 1px solid var(--rule);
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: var(--grid-gap);
+    }
+    .section:first-of-type { border-top: 0; }
+    .sec-index {
+      grid-column: 1 / span 2;
+    }
+    .sec-index .label { display: block; }
+    .sec-index .num-big {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      letter-spacing: 0;
+      color: var(--ink);
+      margin-top: 4px;
+    }
+    .sec-head {
+      grid-column: 3 / span 4;
+    }
+    .sec-body {
+      grid-column: 7 / span 6;
+    }
+    .sec-wide {
+      grid-column: 1 / -1;
+      margin-top: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .section { grid-template-columns: repeat(6, 1fr); gap: 16px; }
+      .sec-index { grid-column: 1 / -1; }
+      .sec-head  { grid-column: 1 / -1; }
+      .sec-body  { grid-column: 1 / -1; }
+    }
+
+    /* --- Header ----------------------------------------------------- */
+    .topbar {
+      padding: 18px var(--pad-x);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+    .brand {
+      display: flex; align-items: center; gap: 12px;
+      font-weight: 600; letter-spacing: -0.01em; font-size: 15px;
+      text-decoration: none;
+    }
+    .brand .mark {
+      width: 22px; height: 22px; background: var(--ink);
+      display: inline-block;
+      position: relative;
+    }
+    .brand .mark::after {
+      content: ""; position: absolute; inset: 6px 0 0 6px;
+      background: var(--accent);
+    }
+    .topbar .meta {
+      display: flex; gap: 28px; align-items: center;
+    }
+    .topbar .meta .label { color: var(--ink-2); }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 10px; border: 1px solid var(--rule);
+      font-size: 11px; letter-spacing: var(--tracking-label); text-transform: uppercase;
+      background: var(--paper-2);
+    }
+    .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--good); display: inline-block; }
+
+    /* --- Hero ------------------------------------------------------- */
+    .hero {
+      padding: 64px var(--pad-x) 48px;
+      border-top: 2px solid var(--rule);
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: var(--grid-gap);
+      align-items: end;
+    }
+    .hero h1 { grid-column: 1 / span 9; }
+    .hero .kicker { grid-column: 1 / -1; margin-bottom: 18px; display: flex; gap: 18px; align-items: center; }
+    .hero .bar { height: 1px; background: var(--rule); flex: 1; }
+    .hero aside {
+      grid-column: 10 / -1;
+      font-size: 13px; line-height: 1.55; color: var(--ink-2);
+      border-left: 1px solid var(--rule); padding-left: 16px;
+    }
+    @media (max-width: 900px) {
+      .hero { grid-template-columns: repeat(6, 1fr); padding: 40px var(--pad-x) 28px; }
+      .hero h1 { grid-column: 1 / -1; }
+      .hero aside { grid-column: 1 / -1; border-left: 0; padding-left: 0; border-top: 1px solid var(--rule); padding-top: 16px; }
+    }
+
+    /* --- Buttons ---------------------------------------------------- */
+    .btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      font: 500 13px/1 var(--font-sans);
+      letter-spacing: 0.02em;
+      padding: 12px 16px;
+      background: var(--ink); color: var(--paper-2);
+      border: 1px solid var(--ink); cursor: pointer;
+      text-decoration: none;
+    }
+    .btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn.ghost { background: transparent; color: var(--ink); }
+    .btn.ghost:hover { background: var(--ink); color: var(--paper-2); }
+    .btn.small { padding: 8px 12px; font-size: 12px; }
+    .btn[disabled] { opacity: 0.35; cursor: not-allowed; }
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    /* --- Upload zone ------------------------------------------------ */
+    .drop {
+      border: 1.5px dashed var(--ink); background: var(--paper-2);
+      padding: 36px 28px;
+      display: grid; gap: 10px;
+      cursor: pointer;
+      transition: background .15s ease, border-color .15s ease;
+    }
+    .drop:hover, .drop.over {
+      background: var(--accent-soft); border-color: var(--accent);
+    }
+    .drop .big { font-size: 22px; font-weight: 600; letter-spacing: var(--tracking-tight); }
+    .drop .hint { color: var(--ink-3); font-size: 13px; }
+    .drop input[type=file] { display: none; }
+    .samples { margin-top: 14px; display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; }
+    .samples a { color: var(--ink-2); }
+
+    /* --- Schema panel ---------------------------------------------- */
+    .schema-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 0;
+      border-top: 1px solid var(--rule);
+      border-left: 1px solid var(--rule);
+    }
+    .schema-cell {
+      border-right: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
+      padding: 12px 14px;
+      background: var(--paper-2);
+      display: grid; gap: 4px;
+    }
+    .schema-cell .col-name { font-weight: 600; font-size: 13px; }
+    .schema-cell .col-meta { display: flex; gap: 8px; align-items: center; font-size: 11px; color: var(--ink-3); }
+    .tag {
+      display: inline-flex; align-items: center;
+      font-family: var(--font-mono); font-size: 10px;
+      padding: 2px 6px; border: 1px solid var(--rule);
+      background: var(--paper); text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .tag.num { background: var(--ink); color: var(--paper-2); border-color: var(--ink); }
+    .tag.cat { background: var(--paper-2); color: var(--ink); }
+    .tag.date { background: #eef; border-color: #aab; }
+    .tag.bool { background: #efe; border-color: #aba; }
+    .tag.cluster { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+
+    .ps-banner {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; padding: 14px 18px; margin-bottom: 16px;
+      background: var(--ink); color: var(--paper-2);
+    }
+    .ps-banner .lead { font-weight: 600; font-size: 14px; }
+    .ps-banner .sub { font-size: 12px; color: var(--ink-4); margin-top: 2px; }
+
+    /* --- Preview table --------------------------------------------- */
+    .tbl-wrap { overflow: auto; border: 1px solid var(--rule); background: var(--paper-2); max-height: 420px; }
+    table.preview {
+      width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 12px;
+    }
+    table.preview th, table.preview td {
+      padding: 8px 10px; text-align: left;
+      border-bottom: 1px solid var(--rule-soft); white-space: nowrap;
+    }
+    table.preview thead th {
+      position: sticky; top: 0; background: var(--ink); color: var(--paper-2);
+      font-weight: 500; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+      border-bottom: 1px solid var(--ink);
+    }
+    table.preview tbody tr:hover { background: var(--accent-soft); }
+
+    /* --- Chart builder --------------------------------------------- */
+    .builder {
+      display: grid; grid-template-columns: repeat(12, 1fr); gap: var(--grid-gap);
+      background: var(--paper-2); border: 1px solid var(--rule); padding: 20px;
+    }
+    .builder .field {
+      grid-column: span 3; display: flex; flex-direction: column; gap: 6px; min-width: 0;
+    }
+    .builder .field.wide { grid-column: span 4; }
+    .builder .field .label { font-size: 10px; }
+    .builder select, .builder input[type=text] {
+      font: 500 13px var(--font-sans); padding: 10px 10px;
+      border: 1px solid var(--rule); background: var(--paper);
+      appearance: none; -webkit-appearance: none; border-radius: 0;
+    }
+    .builder select:focus, .builder input:focus { outline: 2px solid var(--accent); outline-offset: -2px; }
+    .builder .actions { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; gap: 14px; }
+    .builder .hint { font-size: 12px; color: var(--ink-3); }
+    @media (max-width: 900px) {
+      .builder .field { grid-column: 1 / -1; }
+    }
+
+    /* --- Dashboard canvas ------------------------------------------ */
+    .dash-toolbar {
+      display: flex; justify-content: space-between; align-items: center; gap: 14px;
+      padding: 0 0 14px; border-bottom: 1px solid var(--rule); margin-bottom: 16px;
+    }
+    .dash-toolbar .filters { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      display: inline-flex; gap: 8px; align-items: center;
+      padding: 5px 10px; font-size: 12px; background: var(--ink); color: var(--paper-2);
+      font-family: var(--font-mono);
+    }
+    .chip button { all: unset; cursor: pointer; font-size: 14px; line-height: 1; color: var(--paper-2); }
+    .chip button:hover { color: var(--accent); }
+
+    .dash {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: var(--grid-gap);
+    }
+    .card {
+      grid-column: span 6;
+      background: var(--paper-2); border: 1px solid var(--rule);
+      padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0;
+    }
+    .card.wide { grid-column: span 12; }
+    .card.third { grid-column: span 4; }
+    .card-head {
+      display: flex; justify-content: space-between; align-items: start; gap: 10px;
+      border-bottom: 1px solid var(--rule); padding-bottom: 8px;
+    }
+    .card-head .t { font-weight: 600; font-size: 14px; line-height: 1.25; }
+    .card-head .s { font-size: 11px; color: var(--ink-3); }
+    .card-head .tools { display: flex; gap: 4px; }
+    .card-head .tools button {
+      all: unset; cursor: pointer; font-size: 11px; padding: 3px 6px;
+      border: 1px solid var(--rule); color: var(--ink-2);
+    }
+    .card-head .tools button:hover { background: var(--ink); color: var(--paper-2); border-color: var(--ink); }
+    .card .chart-host { position: relative; height: 260px; }
+    .card.tall .chart-host { height: 340px; }
+
+    .dash-empty {
+      grid-column: 1 / -1; border: 1px dashed var(--rule); padding: 60px 20px;
+      text-align: center; color: var(--ink-3); background: var(--paper-2);
+    }
+
+    /* --- Summary stats --------------------------------------------- */
+    .stat-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 0; border-top: 1px solid var(--rule); border-left: 1px solid var(--rule);
+    }
+    .stat {
+      border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+      padding: 14px 16px; background: var(--paper-2);
+    }
+    .stat .label { font-size: 10px; }
+    .stat .value { font-family: var(--font-mono); font-size: 22px; margin-top: 6px; letter-spacing: -0.01em; }
+
+    /* --- Correlation heatmap --------------------------------------- */
+    .heatmap { display: grid; gap: 0; font-family: var(--font-mono); font-size: 10px; }
+    .heatmap .row { display: grid; }
+    .heatmap .cell {
+      padding: 8px 6px; text-align: center; color: var(--ink);
+      border: 1px solid rgba(0,0,0,0.04);
+    }
+    .heatmap .cell.label { background: var(--paper); font-weight: 600; text-align: right; padding-right: 10px; border-color: var(--rule-soft); }
+    .heatmap .cell.col-label { background: var(--paper); font-weight: 600; text-align: center; border-color: var(--rule-soft); }
+
+    /* --- Insight callout ------------------------------------------- */
+    .insight {
+      border-left: 3px solid var(--accent);
+      padding: 10px 14px; background: var(--paper-2); font-size: 13px;
+      color: var(--ink-2);
+    }
+
+    /* --- Footer ---------------------------------------------------- */
+    footer.foot {
+      border-top: 2px solid var(--rule);
+      padding: 28px var(--pad-x) 40px;
+      display: grid; grid-template-columns: repeat(12, 1fr); gap: var(--grid-gap);
+      font-size: 12px; color: var(--ink-3);
+    }
+    footer.foot .one { grid-column: 1 / span 4; }
+    footer.foot .two { grid-column: 5 / span 4; }
+    footer.foot .three { grid-column: 9 / span 4; }
+    @media (max-width: 900px) {
+      footer.foot { grid-template-columns: 1fr; }
+      footer.foot > div { grid-column: 1 / -1; }
+    }
+
+    /* --- Utility --------------------------------------------------- */
+    .hidden { display: none !important; }
+    .muted { color: var(--ink-3); }
+    .rule { height: 1px; background: var(--rule); margin: 12px 0; }
+    .row-gap { display: flex; flex-direction: column; gap: 12px; }
+    .inline-split { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .kbd {
+      font-family: var(--font-mono); font-size: 11px; padding: 2px 6px;
+      border: 1px solid var(--rule); background: var(--paper-2);
+    }
+  </style>
+</head>
+<body>
+  <!-- ================= Topbar ================= -->
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="Free Period home">
+      <span class="mark" aria-hidden="true"></span>
+      <span>Free Period</span>
+    </a>
+    <div class="meta">
+      <span class="label">Local-First Dashboard · v0.1</span>
+      <span class="pill"><span class="dot" aria-hidden="true"></span>No data transmitted</span>
+    </div>
+  </header>
+
+  <!-- ================= Hero ================= -->
+  <section class="hero">
+    <div class="kicker">
+      <span class="label">FP / Tools / 01</span>
+      <span class="bar" aria-hidden="true"></span>
+      <span class="label mono" id="today-date"></span>
+    </div>
+    <h1 class="h-display">Your school&nbsp;data,<br>visualized in your&nbsp;browser.</h1>
+    <aside>
+      Upload a CSV from PowerSchool or any SIS. Fields are auto-detected, charts build in one click, and nothing ever leaves this tab. Close the tab, the data is gone. No login. No server. No database.
+    </aside>
+  </section>
+
+  <!-- ================= Main ================= -->
+  <main class="frame">
+
+    <!-- -------- 01 · Upload -------- -->
+    <section class="section" id="sec-upload">
+      <div class="sec-index">
+        <span class="label">Section</span>
+        <div class="num-big">01 / Upload</div>
+      </div>
+      <div class="sec-head">
+        <h2 class="h-section">Drop a CSV.<br>Nothing uploads.</h2>
+      </div>
+      <div class="sec-body">
+        <label class="drop" id="drop" tabindex="0" role="button" aria-label="Upload CSV file">
+          <span class="big">Drag a file here, or click to pick one.</span>
+          <span class="hint">Accepts .csv. Files are parsed in-browser with PapaParse. No network requests after load.</span>
+          <input type="file" id="file-input" accept=".csv,text/csv">
+        </label>
+        <div class="samples">
+          <span class="label">Try with sample:</span>
+          <a href="#" id="load-generic">generic-example.csv</a>
+          <a href="#" id="load-powerschool">powerschool-mock.csv</a>
+        </div>
+        <div class="rule"></div>
+        <p class="muted" style="font-size:12px; margin:0;">
+          <span class="kbd">Privacy</span>&nbsp; No <code>fetch</code>/<code>XHR</code> with your data. No analytics. No cookies.
+          Refresh the page and the data is gone.
+        </p>
+      </div>
+    </section>
+
+    <!-- -------- 02 · Schema -------- -->
+    <section class="section hidden" id="sec-schema">
+      <div class="sec-index">
+        <span class="label">Section</span>
+        <div class="num-big">02 / Schema</div>
+      </div>
+      <div class="sec-head">
+        <h2 class="h-section">Detected fields.</h2>
+        <p class="muted" style="margin-top:10px; font-size:13px;">Column types inferred from values. PowerSchool-style clusters are tagged where patterns match.</p>
+      </div>
+      <div class="sec-body">
+        <div id="ps-banner" class="ps-banner hidden">
+          <div>
+            <div class="lead">PowerSchool mode available</div>
+            <div class="sub" id="ps-banner-sub">We recognized student, academic and demographic fields.</div>
+          </div>
+          <div class="btn-row">
+            <button class="btn small ghost" id="ps-activate" style="color:#fff; border-color:#fff;">Activate</button>
+          </div>
+        </div>
+        <div id="schema-summary" class="inline-split" style="margin-bottom:10px; font-size:12px; color: var(--ink-3);"></div>
+      </div>
+      <div class="sec-wide">
+        <div class="schema-grid" id="schema-grid"></div>
+      </div>
+    </section>
+
+    <!-- -------- 03 · Preview -------- -->
+    <section class="section hidden" id="sec-preview">
+      <div class="sec-index">
+        <span class="label">Section</span>
+        <div class="num-big">03 / Preview</div>
+      </div>
+      <div class="sec-head">
+        <h2 class="h-section">First 50 rows.</h2>
+        <p class="muted" style="margin-top:10px; font-size:13px;">Read-only. This is a sanity check that your file parsed correctly.</p>
+      </div>
+      <div class="sec-body">
+        <div id="preview-meta" class="inline-split" style="font-size:12px; color: var(--ink-3);"></div>
+      </div>
+      <div class="sec-wide">
+        <div class="tbl-wrap">
+          <table class="preview" id="preview-table"><thead></thead><tbody></tbody></table>
+        </div>
+      </div>
+    </section>
+
+    <!-- -------- 04 · Build -------- -->
+    <section class="section hidden" id="sec-build">
+      <div class="sec-index">
+        <span class="label">Section</span>
+        <div class="num-big">04 / Build</div>
+      </div>
+      <div class="sec-head">
+        <h2 class="h-section">Build a chart.</h2>
+        <p class="muted" style="margin-top:10px; font-size:13px;">Pick a chart type and a couple of columns. Add it to the dashboard. Repeat.</p>
+      </div>
+      <div class="sec-body">
+        <div class="row-gap">
+          <button class="btn" id="ps-preset-btn" type="button">Generate PowerSchool dashboard</button>
+          <p class="muted" style="font-size:12px; margin:0;">Pre-builds cohort, attendance, academic, behavior, correlation and equity views. Only visible when PowerSchool fields are detected.</p>
+        </div>
+      </div>
+      <div class="sec-wide">
+        <div class="builder" id="builder">
+          <div class="field">
+            <span class="label">Chart type</span>
+            <select id="f-type">
+              <option value="bar">Bar · grouped mean</option>
+              <option value="hbar">Bar · count by category</option>
+              <option value="line">Line · over time</option>
+              <option value="pie">Pie · composition</option>
+              <option value="scatter">Scatter · x vs y</option>
+              <option value="histogram">Histogram · distribution</option>
+              <option value="summary">Summary stats · single column</option>
+            </select>
+          </div>
+          <div class="field">
+            <span class="label">X · category / bins</span>
+            <select id="f-x"></select>
+          </div>
+          <div class="field">
+            <span class="label">Y · numeric</span>
+            <select id="f-y"></select>
+          </div>
+          <div class="field wide">
+            <span class="label">Title (optional)</span>
+            <input type="text" id="f-title" placeholder="auto">
+          </div>
+          <div class="actions">
+            <span class="hint" id="f-hint">Tip: for a bar of mean GPA by grade, pick X=grade_level, Y=gpa.</span>
+            <div class="btn-row">
+              <button class="btn ghost" id="f-reset" type="button">Reset</button>
+              <button class="btn" id="f-add" type="button">Add to dashboard</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- -------- 05 · Dashboard -------- -->
+    <section class="section hidden" id="sec-dash">
+      <div class="sec-index">
+        <span class="label">Section</span>
+        <div class="num-big">05 / Dashboard</div>
+      </div>
+      <div class="sec-head">
+        <h2 class="h-section">Canvas.</h2>
+        <p class="muted" style="margin-top:10px; font-size:13px;">Click any bar or segment to cross-filter the dashboard. Clear filters anytime.</p>
+      </div>
+      <div class="sec-body">
+        <div class="btn-row">
+          <button class="btn ghost small" id="clear-filters">Clear filters</button>
+          <button class="btn ghost small" id="clear-dash">Clear dashboard</button>
+        </div>
+        <p class="muted" style="font-size:12px; margin-top:10px;" id="dash-count"></p>
+      </div>
+      <div class="sec-wide">
+        <div class="dash-toolbar">
+          <div class="filters" id="filter-chips"><span class="label">Filters: none</span></div>
+          <div class="label mono" id="active-rows"></div>
+        </div>
+        <div class="dash" id="dash">
+          <div class="dash-empty">No charts yet. Build one above, or generate the PowerSchool preset.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- -------- 06 · Export -------- -->
+    <section class="section hidden" id="sec-export">
+      <div class="sec-index">
+        <span class="label">Section</span>
+        <div class="num-big">06 / Export</div>
+      </div>
+      <div class="sec-head">
+        <h2 class="h-section">Take it with you.</h2>
+        <p class="muted" style="margin-top:10px; font-size:13px;">Snapshot the dashboard as an image or a formatted PDF. Both are generated locally.</p>
+      </div>
+      <div class="sec-body">
+        <div class="row-gap">
+          <label class="label">Report title</label>
+          <input type="text" id="report-title" style="font: 500 14px var(--font-sans); padding: 10px; border: 1px solid var(--rule); background: var(--paper-2);" placeholder="e.g. Grade 9 Cohort Snapshot — Spring">
+          <div class="btn-row">
+            <button class="btn" id="btn-copy" type="button">Copy to clipboard</button>
+            <button class="btn ghost" id="btn-png" type="button">Download PNG</button>
+            <button class="btn ghost" id="btn-pdf" type="button">Download PDF</button>
+          </div>
+          <p class="muted" style="font-size:12px; margin:0;" id="export-status"></p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= Footer ================= -->
+  <footer class="foot">
+    <div class="one">
+      <div class="label" style="margin-bottom:8px;">Free Period</div>
+      <div>A zero-backend, privacy-first dashboard for school administrators and counselors. Ed-tech for teachers building with AI.</div>
+    </div>
+    <div class="two">
+      <div class="label" style="margin-bottom:8px;">Guarantees</div>
+      <div>No data leaves this tab. No <code>localStorage</code>. No analytics. Save the page and run it offline from a USB drive.</div>
+    </div>
+    <div class="three">
+      <div class="label" style="margin-bottom:8px;">Build</div>
+      <div>Single-file HTML · PapaParse · Chart.js · jsPDF · html2canvas. MIT. Generated <span class="mono" id="build-date"></span>.</div>
+    </div>
+  </footer>
+
+  <!-- Vendor scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+  <!-- App -->
+  <script id="app-script">
+  (() => {
+    "use strict";
+
+    /* =========================================================
+       State
+       ========================================================= */
+    const State = {
+      rows: [],            // array of row objects
+      columns: [],         // [{ name, type, cluster, role, nullCount, unique, min, max }]
+      mode: "generic",     // "generic" | "powerschool"
+      charts: [],          // [{ id, type, x, y, title, chart }]
+      filters: [],         // [{ col, op, value, label }]
+    };
+
+    /* =========================================================
+       Small helpers
+       ========================================================= */
+    const $  = (sel, root = document) => root.querySelector(sel);
+    const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+    const uid = () => Math.random().toString(36).slice(2, 9);
+    const fmtNum = (n, d = 2) => (n == null || Number.isNaN(n)) ? "—" : Number(n).toLocaleString(undefined, { maximumFractionDigits: d });
+    const fmtPct = n => (n == null || Number.isNaN(n)) ? "—" : (n * 100).toFixed(1) + "%";
+    const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+    /* =========================================================
+       Date banners
+       ========================================================= */
+    const today = new Date();
+    const ymd = today.toISOString().slice(0, 10);
+    const dEl = $("#today-date"); if (dEl) dEl.textContent = ymd;
+    const bEl = $("#build-date"); if (bEl) bEl.textContent = ymd;
+
+    /* =========================================================
+       Type inference
+       ========================================================= */
+    const isNumericLike = v => {
+      if (v === null || v === undefined || v === "") return false;
+      const s = String(v).trim().replace(/,/g, "");
+      if (s === "") return false;
+      return !Number.isNaN(Number(s));
+    };
+    const isDateLike = v => {
+      if (!v) return false;
+      const s = String(v).trim();
+      if (s.length < 6) return false;
+      // accept yyyy-mm-dd, yyyy/mm/dd, mm/dd/yyyy
+      return /^\d{4}[-/]\d{1,2}[-/]\d{1,2}/.test(s) || /^\d{1,2}[-/]\d{1,2}[-/]\d{2,4}/.test(s);
+    };
+    const isBoolLike = v => {
+      if (v === null || v === undefined) return false;
+      const s = String(v).trim().toLowerCase();
+      return ["y","n","yes","no","true","false","0","1","t","f"].includes(s);
+    };
+
+    function inferType(values) {
+      let n = 0, nums = 0, dates = 0, bools = 0, nonEmpty = 0;
+      const uniq = new Set();
+      for (const v of values) {
+        n++;
+        if (v === null || v === undefined || v === "") continue;
+        nonEmpty++;
+        uniq.add(String(v));
+        if (isNumericLike(v)) nums++;
+        if (isDateLike(v)) dates++;
+        if (isBoolLike(v)) bools++;
+      }
+      if (!nonEmpty) return { type: "string", unique: 0 };
+      const frac = c => c / nonEmpty;
+      if (frac(dates) > 0.9) return { type: "date", unique: uniq.size };
+      if (frac(nums)  > 0.9) return { type: "number", unique: uniq.size };
+      if (frac(bools) > 0.95 && uniq.size <= 3) return { type: "boolean", unique: uniq.size };
+      if (uniq.size <= Math.max(20, nonEmpty * 0.1)) return { type: "categorical", unique: uniq.size };
+      return { type: "string", unique: uniq.size };
+    }
+
+    const toNum = v => {
+      if (v === null || v === undefined || v === "") return null;
+      const n = Number(String(v).replace(/,/g, ""));
+      return Number.isNaN(n) ? null : n;
+    };
+
+    /* =========================================================
+       PowerSchool pattern matching
+       Each rule: [regex, cluster, role]
+       ========================================================= */
+    const PS_RULES = [
+      // identity
+      [/^(student[_\s-]?number|student[_\s-]?id|studentid|dcid|\bid\b)$/i, "identity", "student_id"],
+      [/first[_\s-]?name/i, "identity", "first_name"],
+      [/last[_\s-]?name/i, "identity", "last_name"],
+      // grade level
+      [/^(grade[_\s-]?level|gradelevel|grade_num|grade)$/i, "demographic", "grade_level"],
+      [/^(year|cohort)$/i, "demographic", "cohort"],
+      // demographics
+      [/^(gender|sex)$/i, "demographic", "gender"],
+      [/^(ethnicity|race)$/i, "demographic", "ethnicity"],
+      [/^(ell|esl|el_status)$/i, "demographic", "ell"],
+      [/^(sped|iep|504|special[_\s-]?ed)$/i, "demographic", "sped"],
+      [/^(frl|free[_\s-]?reduced|lunch[_\s-]?status|ses)$/i, "demographic", "frl"],
+      // attendance
+      [/attendance[_\s-]?pct|attendance[_\s-]?rate|present[_\s-]?pct/i, "attendance", "attendance_pct"],
+      [/^(absences?|absent)$/i, "attendance", "absences"],
+      [/^(tardies?|tardy)$/i, "attendance", "tardies"],
+      [/unexcused/i, "attendance", "unexcused"],
+      // academic
+      [/^(gpa|cum[_\s-]?gpa|cumulative[_\s-]?gpa)$/i, "academic", "gpa"],
+      [/(final[_\s-]?grade|course[_\s-]?grade|semester[_\s-]?mark|subject[_\s-]?grade)/i, "academic", "grade"],
+      [/^(score|mark|percent)$/i, "academic", "score"],
+      // behavior
+      [/referrals?/i, "behavior", "referrals"],
+      [/suspensions?/i, "behavior", "suspensions"],
+      [/detentions?/i, "behavior", "detentions"],
+      [/incidents?/i, "behavior", "incidents"],
+      [/discipline|conduct/i, "behavior", "conduct"],
+      // dates
+      [/enrollment|entry[_\s-]?date/i, "date", "enrollment_date"],
+      [/exit[_\s-]?date/i, "date", "exit_date"],
+      [/dob|birth/i, "date", "dob"],
+    ];
+
+    function classifyColumn(name) {
+      for (const [rx, cluster, role] of PS_RULES) {
+        if (rx.test(name)) return { cluster, role };
+      }
+      return { cluster: null, role: null };
+    }
+
+    function detectMode(cols) {
+      const clusters = new Set(cols.map(c => c.cluster).filter(Boolean));
+      // Require at least 2 clusters AND one of academic/attendance/behavior to qualify.
+      const hasCore = ["academic","attendance","behavior"].some(c => clusters.has(c));
+      return (clusters.size >= 2 && hasCore) ? "powerschool" : "generic";
+    }
+
+    /* =========================================================
+       CSV ingestion
+       ========================================================= */
+    function ingest(rows) {
+      if (!rows || !rows.length) { alert("No rows found in file."); return; }
+
+      // Build schema
+      const names = Object.keys(rows[0]);
+      const columns = names.map(name => {
+        const values = rows.map(r => r[name]);
+        const t = inferType(values);
+        const nullCount = values.filter(v => v === null || v === undefined || v === "").length;
+        const ps = classifyColumn(name);
+        let min = null, max = null;
+        if (t.type === "number") {
+          const nums = values.map(toNum).filter(v => v !== null);
+          if (nums.length) { min = Math.min(...nums); max = Math.max(...nums); }
+        }
+        return { name, type: t.type, unique: t.unique, nullCount, cluster: ps.cluster, role: ps.role, min, max };
+      });
+
+      State.rows = rows;
+      State.columns = columns;
+      State.mode = detectMode(columns);
+      State.charts = [];
+      State.filters = [];
+
+      // Reveal downstream sections
+      ["#sec-schema","#sec-preview","#sec-build","#sec-dash","#sec-export"].forEach(s => $(s).classList.remove("hidden"));
+
+      renderSchema();
+      renderPreview();
+      populateBuilder();
+      renderFilters();
+      renderDashboard();
+      $("#sec-schema").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function parseCsvText(text) {
+      const res = Papa.parse(text, { header: true, skipEmptyLines: "greedy", dynamicTyping: false });
+      if (res.errors && res.errors.length) {
+        console.warn("Parse errors:", res.errors.slice(0, 5));
+      }
+      ingest(res.data);
+    }
+
+    function parseCsvFile(file) {
+      Papa.parse(file, {
+        header: true, skipEmptyLines: "greedy", dynamicTyping: false,
+        complete: (res) => {
+          if (res.errors && res.errors.length) console.warn("Parse errors:", res.errors.slice(0, 5));
+          ingest(res.data);
+        },
+        error: (err) => alert("CSV parse failed: " + err.message),
+      });
+    }
+
+    /* =========================================================
+       Upload wiring
+       ========================================================= */
+    const drop = $("#drop");
+    const fileInput = $("#file-input");
+
+    drop.addEventListener("click", () => fileInput.click());
+    drop.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInput.click(); } });
+    drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("over"); });
+    drop.addEventListener("dragleave", () => drop.classList.remove("over"));
+    drop.addEventListener("drop", (e) => {
+      e.preventDefault(); drop.classList.remove("over");
+      const f = e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) parseCsvFile(f);
+    });
+    fileInput.addEventListener("change", (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (f) parseCsvFile(f);
+    });
+
+    // Sample CSVs: try to fetch from relative path; if that fails (file://),
+    // offer a friendly note.
+    async function loadSample(path) {
+      try {
+        const res = await fetch(path);
+        if (!res.ok) throw new Error(res.status);
+        const text = await res.text();
+        parseCsvText(text);
+      } catch (err) {
+        alert("Couldn't load the sample from " + path + ".\n\nIf you opened this file directly (file://), your browser may block fetches. Serve the folder with a local web server, e.g.:\n\n    python3 -m http.server 8000\n\nThen open http://localhost:8000/");
+      }
+    }
+    $("#load-generic").addEventListener("click", (e) => { e.preventDefault(); loadSample("sample-data/generic-example.csv"); });
+    $("#load-powerschool").addEventListener("click", (e) => { e.preventDefault(); loadSample("sample-data/powerschool-mock.csv"); });
+
+    // Expose a few functions to module scope — the rest of the app wires them up in later blocks.
+    window.__FP = { State, renderSchema: () => {}, renderPreview: () => {}, populateBuilder: () => {}, renderFilters: () => {}, renderDashboard: () => {} };
+    // The real implementations are assigned in the next script blocks.
+    function renderSchema()    { window.__FP.renderSchema(); }
+    function renderPreview()   { window.__FP.renderPreview(); }
+    function populateBuilder() { window.__FP.populateBuilder(); }
+    function renderFilters()   { window.__FP.renderFilters(); }
+    function renderDashboard() { window.__FP.renderDashboard(); }
+
+    // Share utilities with subsequent blocks via window.__FP
+    Object.assign(window.__FP, { $, $$, uid, fmtNum, fmtPct, escapeHtml, toNum });
+  })();
+  </script>
+
+  <script>
+  /* =============================================================
+     Block 2 — Schema panel + preview table
+     ============================================================= */
+  (() => {
+    const FP = window.__FP;
+    const { State, $, escapeHtml, fmtNum } = FP;
+
+    function renderSchema() {
+      const grid = $("#schema-grid");
+      const clusterCounts = {};
+      for (const c of State.columns) if (c.cluster) clusterCounts[c.cluster] = (clusterCounts[c.cluster] || 0) + 1;
+
+      // Banner
+      const banner = $("#ps-banner");
+      const sub = $("#ps-banner-sub");
+      if (State.mode === "powerschool") {
+        banner.classList.remove("hidden");
+        const parts = Object.entries(clusterCounts)
+          .sort((a,b) => b[1] - a[1])
+          .map(([k,v]) => `${v} ${k}`);
+        sub.textContent = "Recognized: " + parts.join(" · ");
+      } else {
+        banner.classList.add("hidden");
+      }
+
+      // Summary line
+      const summary = $("#schema-summary");
+      summary.innerHTML =
+        `<span class="label">${State.columns.length} columns</span>` +
+        `<span class="label">${State.rows.length.toLocaleString()} rows</span>` +
+        `<span class="label">Mode: ${State.mode}</span>`;
+
+      // Cells
+      grid.innerHTML = State.columns.map(c => {
+        const tagCls = c.type === "number" ? "num" : c.type === "categorical" ? "cat" : c.type === "date" ? "date" : c.type === "boolean" ? "bool" : "cat";
+        const clusterTag = c.cluster ? `<span class="tag cluster">${escapeHtml(c.cluster)}</span>` : "";
+        const range = (c.type === "number" && c.min !== null) ? `${fmtNum(c.min)} – ${fmtNum(c.max)}` : `${c.unique} unique`;
+        const nulls = c.nullCount ? `${c.nullCount} null` : "0 null";
+        return `
+          <div class="schema-cell" data-col="${escapeHtml(c.name)}">
+            <div class="col-name">${escapeHtml(c.name)}</div>
+            <div class="col-meta">
+              <span class="tag ${tagCls}">${c.type}</span>
+              ${clusterTag}
+            </div>
+            <div class="col-meta" style="font-family: var(--font-mono);">
+              <span>${range}</span>
+              <span>·</span>
+              <span>${nulls}</span>
+            </div>
+          </div>`;
+      }).join("");
+    }
+
+    function renderPreview() {
+      const table = $("#preview-table");
+      const meta = $("#preview-meta");
+      const rows = State.rows.slice(0, 50);
+      const cols = State.columns;
+
+      meta.innerHTML =
+        `<span class="label">Showing ${rows.length} of ${State.rows.length.toLocaleString()} rows</span>` +
+        `<span class="label">${cols.length} columns</span>`;
+
+      const thead = cols.map(c => `<th>${escapeHtml(c.name)}<br><span style="font-weight:400; opacity:.6;">${c.type}</span></th>`).join("");
+      const tbody = rows.map(r => {
+        return "<tr>" + cols.map(c => {
+          const v = r[c.name];
+          const disp = (v === null || v === undefined || v === "") ? '<span style="opacity:.35">·</span>' : escapeHtml(String(v));
+          return `<td>${disp}</td>`;
+        }).join("") + "</tr>";
+      }).join("");
+
+      table.querySelector("thead").innerHTML = `<tr>${thead}</tr>`;
+      table.querySelector("tbody").innerHTML = tbody;
+    }
+
+    FP.renderSchema = renderSchema;
+    FP.renderPreview = renderPreview;
+
+    // Banner interactions
+    $("#ps-activate").addEventListener("click", () => {
+      $("#sec-build").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  })();
+  </script>
+
+  <script>
+  /* =============================================================
+     Block 3 — Chart builder + Chart.js rendering + dashboard canvas
+     ============================================================= */
+  (() => {
+    const FP = window.__FP;
+    const { State, $, $$, uid, fmtNum, toNum, escapeHtml } = FP;
+
+    /* ---- Chart.js global defaults: Swiss minimal ---- */
+    if (window.Chart) {
+      Chart.defaults.font.family = 'Inter, "Helvetica Neue", Helvetica, Arial, sans-serif';
+      Chart.defaults.font.size = 11;
+      Chart.defaults.color = "#2a2a2a";
+      Chart.defaults.borderColor = "#e5e5e5";
+      Chart.defaults.plugins.legend.labels.boxWidth = 10;
+      Chart.defaults.plugins.legend.labels.boxHeight = 10;
+      Chart.defaults.plugins.legend.labels.padding = 12;
+      Chart.defaults.plugins.tooltip.backgroundColor = "#0a0a0a";
+      Chart.defaults.plugins.tooltip.titleColor = "#fff";
+      Chart.defaults.plugins.tooltip.bodyColor = "#fff";
+      Chart.defaults.plugins.tooltip.borderWidth = 0;
+      Chart.defaults.plugins.tooltip.cornerRadius = 0;
+      Chart.defaults.plugins.tooltip.padding = 8;
+    }
+    const PALETTE = ["#0a0a0a","#e4002b","#6a6a6a","#c46b00","#0b7a3a","#2b4a9b","#8a3ffc","#a8a8a8"];
+
+    /* ---- Filter application ---- */
+    function activeRows() {
+      if (!State.filters.length) return State.rows;
+      return State.rows.filter(r => State.filters.every(f => {
+        const v = r[f.col];
+        if (f.op === "eq") return String(v) === String(f.value);
+        if (f.op === "range") { const n = toNum(v); return n !== null && n >= f.value[0] && n <= f.value[1]; }
+        return true;
+      }));
+    }
+    FP.activeRows = activeRows;
+
+    /* ---- Populate builder selects ---- */
+    function populateBuilder() {
+      const x = $("#f-x"), y = $("#f-y");
+      const type = $("#f-type").value;
+      const numCols = State.columns.filter(c => c.type === "number");
+      const catCols = State.columns.filter(c => c.type === "categorical" || c.type === "boolean" || c.type === "date");
+      const anyCols = State.columns;
+
+      const opt = c => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)} · ${c.type}${c.cluster ? " · " + c.cluster : ""}</option>`;
+
+      let xList, yList;
+      if (type === "bar")        { xList = catCols;  yList = numCols; }
+      else if (type === "hbar")  { xList = catCols;  yList = []; }
+      else if (type === "line")  { xList = anyCols;  yList = numCols; }
+      else if (type === "pie")   { xList = catCols;  yList = []; }
+      else if (type === "scatter") { xList = numCols; yList = numCols; }
+      else if (type === "histogram") { xList = numCols; yList = []; }
+      else if (type === "summary") { xList = numCols; yList = []; }
+
+      x.innerHTML = xList.map(opt).join("") || `<option value="">(no compatible columns)</option>`;
+      y.innerHTML = yList.length ? yList.map(opt).join("") : `<option value="">—</option>`;
+      y.disabled = !yList.length;
+
+      // Hints
+      const hintEl = $("#f-hint");
+      const hints = {
+        bar: "Grouped mean of Y per X category.",
+        hbar: "Row count per X category.",
+        line: "Line chart: orders by X, sums/averages Y.",
+        pie: "Share of records by X category.",
+        scatter: "Each point is one row.",
+        histogram: "Frequency of X values across auto bins.",
+        summary: "Mean, median, stdev, range, nulls."
+      };
+      hintEl.textContent = hints[type] || "";
+
+      // Toggle PowerSchool preset button
+      $("#ps-preset-btn").style.display = State.mode === "powerschool" ? "inline-flex" : "none";
+    }
+    FP.populateBuilder = populateBuilder;
+    $("#f-type").addEventListener("change", populateBuilder);
+
+    /* ---- Aggregators ---- */
+    function groupBy(rows, col) {
+      const m = new Map();
+      for (const r of rows) {
+        const k = (r[col] === null || r[col] === undefined || r[col] === "") ? "(blank)" : String(r[col]);
+        if (!m.has(k)) m.set(k, []);
+        m.get(k).push(r);
+      }
+      return m;
+    }
+    function meanOf(rows, col) {
+      const nums = rows.map(r => toNum(r[col])).filter(v => v !== null);
+      if (!nums.length) return null;
+      return nums.reduce((a,b) => a + b, 0) / nums.length;
+    }
+    function sumOf(rows, col) {
+      return rows.map(r => toNum(r[col])).filter(v => v !== null).reduce((a,b) => a + b, 0);
+    }
+    function medianOf(nums) {
+      if (!nums.length) return null;
+      const s = [...nums].sort((a,b) => a - b);
+      const m = Math.floor(s.length / 2);
+      return s.length % 2 ? s[m] : (s[m-1] + s[m]) / 2;
+    }
+    function stdevOf(nums) {
+      if (nums.length < 2) return null;
+      const m = nums.reduce((a,b) => a + b, 0) / nums.length;
+      const v = nums.reduce((a,b) => a + (b - m) ** 2, 0) / (nums.length - 1);
+      return Math.sqrt(v);
+    }
+    FP.agg = { groupBy, meanOf, sumOf, medianOf, stdevOf };
+
+    /* ---- Histogram bins (Sturges' rule) ---- */
+    function histogramBins(nums) {
+      if (!nums.length) return { labels: [], counts: [] };
+      const min = Math.min(...nums), max = Math.max(...nums);
+      if (min === max) return { labels: [String(min)], counts: [nums.length] };
+      const k = Math.max(5, Math.ceil(Math.log2(nums.length) + 1));
+      const w = (max - min) / k;
+      const counts = new Array(k).fill(0);
+      for (const n of nums) {
+        let i = Math.floor((n - min) / w);
+        if (i >= k) i = k - 1;
+        counts[i]++;
+      }
+      const labels = counts.map((_, i) => {
+        const lo = min + i * w, hi = lo + w;
+        return fmtNum(lo, 1) + "–" + fmtNum(hi, 1);
+      });
+      return { labels, counts };
+    }
+
+    /* ---- Chart creation ---- */
+    function buildDataset(cfg, rows) {
+      const { type, x, y } = cfg;
+      if (type === "bar") {
+        const g = groupBy(rows, x);
+        const labels = [...g.keys()].sort();
+        const data = labels.map(k => meanOf(g.get(k), y));
+        return {
+          type: "bar",
+          data: { labels, datasets: [{ label: `mean(${y})`, data, backgroundColor: PALETTE[0], borderColor: PALETTE[0] }] },
+          options: baseOptions({ xTitle: x, yTitle: `mean(${y})`, onClick: (label) => addEqFilter(x, label) })
+        };
+      }
+      if (type === "hbar") {
+        const g = groupBy(rows, x);
+        const entries = [...g.entries()].sort((a,b) => b[1].length - a[1].length);
+        const labels = entries.map(e => e[0]);
+        const data = entries.map(e => e[1].length);
+        return {
+          type: "bar",
+          data: { labels, datasets: [{ label: "count", data, backgroundColor: PALETTE[0] }] },
+          options: baseOptions({ xTitle: x, yTitle: "count", onClick: (label) => addEqFilter(x, label) })
+        };
+      }
+      if (type === "line") {
+        const sorted = [...rows].filter(r => r[x] !== null && r[x] !== undefined && r[x] !== "")
+          .sort((a,b) => String(a[x]).localeCompare(String(b[x])));
+        const g = groupBy(sorted, x);
+        const labels = [...g.keys()];
+        const data = labels.map(k => meanOf(g.get(k), y));
+        return {
+          type: "line",
+          data: { labels, datasets: [{ label: `mean(${y})`, data, borderColor: PALETTE[1], backgroundColor: PALETTE[1], tension: 0.2, pointRadius: 3 }] },
+          options: baseOptions({ xTitle: x, yTitle: `mean(${y})` })
+        };
+      }
+      if (type === "pie") {
+        const g = groupBy(rows, x);
+        const entries = [...g.entries()].sort((a,b) => b[1].length - a[1].length);
+        const labels = entries.map(e => e[0]);
+        const data = entries.map(e => e[1].length);
+        return {
+          type: "doughnut",
+          data: { labels, datasets: [{ data, backgroundColor: labels.map((_, i) => PALETTE[i % PALETTE.length]), borderColor: "#fff", borderWidth: 2 }] },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "right" } }, onClick: (evt, els) => {
+            if (els && els[0]) addEqFilter(x, labels[els[0].index]);
+          }}
+        };
+      }
+      if (type === "scatter") {
+        const pts = rows.map(r => ({ x: toNum(r[x]), y: toNum(r[y]) })).filter(p => p.x !== null && p.y !== null);
+        return {
+          type: "scatter",
+          data: { datasets: [{ label: `${y} vs ${x}`, data: pts, backgroundColor: PALETTE[0] + "99", borderColor: PALETTE[0], pointRadius: 3 }] },
+          options: baseOptions({ xTitle: x, yTitle: y, scatter: true })
+        };
+      }
+      if (type === "histogram") {
+        const nums = rows.map(r => toNum(r[x])).filter(v => v !== null);
+        const { labels, counts } = histogramBins(nums);
+        return {
+          type: "bar",
+          data: { labels, datasets: [{ label: "count", data: counts, backgroundColor: PALETTE[0] }] },
+          options: baseOptions({ xTitle: x, yTitle: "count" })
+        };
+      }
+      return null;
+    }
+
+    function baseOptions({ xTitle, yTitle, scatter, onClick }) {
+      return {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: true, position: "bottom", align: "start" },
+        },
+        scales: {
+          x: {
+            type: scatter ? "linear" : "category",
+            title: { display: !!xTitle, text: xTitle, font: { size: 10 }, color: "#6a6a6a" },
+            ticks: { font: { size: 10 }, color: "#6a6a6a" },
+            grid: { color: "#eee", drawTicks: false }
+          },
+          y: {
+            title: { display: !!yTitle, text: yTitle, font: { size: 10 }, color: "#6a6a6a" },
+            ticks: { font: { size: 10 }, color: "#6a6a6a" },
+            grid: { color: "#eee", drawTicks: false },
+            beginAtZero: true
+          }
+        },
+        onClick: onClick ? (evt, els, chart) => {
+          if (els && els[0]) {
+            const lbl = chart.data.labels[els[0].index];
+            onClick(lbl);
+          }
+        } : undefined
+      };
+    }
+
+    function addEqFilter(col, value) {
+      if (!State.filters.find(f => f.op === "eq" && f.col === col && String(f.value) === String(value))) {
+        State.filters.push({ op: "eq", col, value, label: `${col} = ${value}` });
+        FP.renderFilters();
+        FP.renderDashboard();
+      }
+    }
+    FP.addEqFilter = addEqFilter;
+
+    /* ---- Dashboard canvas ---- */
+    function renderFilters() {
+      const host = $("#filter-chips");
+      if (!State.filters.length) {
+        host.innerHTML = `<span class="label">Filters: none</span>`;
+      } else {
+        host.innerHTML = State.filters.map((f, i) => `
+          <span class="chip">
+            ${escapeHtml(f.label)}
+            <button type="button" aria-label="Remove filter" data-i="${i}">×</button>
+          </span>`).join("");
+        $$("#filter-chips button").forEach(b => b.addEventListener("click", () => {
+          const i = Number(b.dataset.i);
+          State.filters.splice(i, 1);
+          renderFilters(); FP.renderDashboard();
+        }));
+      }
+      const a = activeRows();
+      $("#active-rows").textContent = `${a.length.toLocaleString()} / ${State.rows.length.toLocaleString()} rows`;
+    }
+    FP.renderFilters = renderFilters;
+
+    function renderDashboard() {
+      const dash = $("#dash");
+      // Destroy existing Chart instances to avoid leaks
+      for (const c of State.charts) { try { c.chart && c.chart.destroy(); } catch (e) {} c.chart = null; }
+
+      if (!State.charts.length) {
+        dash.innerHTML = `<div class="dash-empty">No charts yet. Build one above, or generate the PowerSchool preset.</div>`;
+        $("#dash-count").textContent = "";
+        return;
+      }
+      $("#dash-count").textContent = `${State.charts.length} chart${State.charts.length !== 1 ? "s" : ""} on canvas.`;
+
+      const rows = activeRows();
+      dash.innerHTML = "";
+      for (const cfg of State.charts) {
+        const card = document.createElement("div");
+        card.className = "card" + (cfg.size === "wide" ? " wide" : cfg.size === "third" ? " third" : "") + (cfg.tall ? " tall" : "");
+        card.dataset.id = cfg.id;
+        card.innerHTML = `
+          <div class="card-head">
+            <div>
+              <div class="t">${escapeHtml(cfg.title || defaultTitle(cfg))}</div>
+              <div class="s">${escapeHtml(describeCfg(cfg))}</div>
+            </div>
+            <div class="tools">
+              <button type="button" data-act="wide">${cfg.size === "wide" ? "½" : "▭"}</button>
+              <button type="button" data-act="del">×</button>
+            </div>
+          </div>
+          <div class="chart-host"><canvas></canvas></div>
+          ${cfg.insight ? `<div class="insight">${escapeHtml(cfg.insight)}</div>` : ""}
+        `;
+        dash.appendChild(card);
+
+        // Handle special chart types first
+        if (cfg.type === "summary") {
+          const host = card.querySelector(".chart-host");
+          host.style.height = "auto";
+          host.innerHTML = FP.renderSummaryStats ? FP.renderSummaryStats(cfg.x, rows) : "<div class='muted'>Loading…</div>";
+        } else if (cfg.type === "correlation") {
+          const host = card.querySelector(".chart-host");
+          host.style.height = "auto";
+          host.innerHTML = FP.renderCorrelationHeatmap ? FP.renderCorrelationHeatmap(rows) : "<div class='muted'>Loading…</div>";
+        } else {
+          const ds = buildDataset(cfg, rows);
+          if (ds) {
+            const ctx = card.querySelector("canvas").getContext("2d");
+            cfg.chart = new Chart(ctx, ds);
+          }
+        }
+
+        card.querySelector('[data-act="wide"]').addEventListener("click", () => {
+          cfg.size = cfg.size === "wide" ? "half" : "wide";
+          renderDashboard();
+        });
+        card.querySelector('[data-act="del"]').addEventListener("click", () => {
+          const i = State.charts.findIndex(c => c.id === cfg.id);
+          if (i >= 0) State.charts.splice(i, 1);
+          renderDashboard();
+        });
+      }
+    }
+    FP.renderDashboard = renderDashboard;
+
+    function defaultTitle(cfg) {
+      if (cfg.type === "bar") return `Mean ${cfg.y} by ${cfg.x}`;
+      if (cfg.type === "hbar") return `Count by ${cfg.x}`;
+      if (cfg.type === "line") return `${cfg.y} over ${cfg.x}`;
+      if (cfg.type === "pie") return `Composition by ${cfg.x}`;
+      if (cfg.type === "scatter") return `${cfg.y} vs ${cfg.x}`;
+      if (cfg.type === "histogram") return `Distribution of ${cfg.x}`;
+      if (cfg.type === "summary") return `Summary · ${cfg.x}`;
+      if (cfg.type === "correlation") return "Correlation matrix";
+      return "Chart";
+    }
+    function describeCfg(cfg) {
+      if (cfg.type === "correlation") return "Pearson r across numeric fields";
+      const parts = [cfg.type];
+      if (cfg.x) parts.push("x: " + cfg.x);
+      if (cfg.y) parts.push("y: " + cfg.y);
+      return parts.join(" · ");
+    }
+    FP.defaultTitle = defaultTitle;
+    FP.describeCfg = describeCfg;
+
+    // Summary stats + correlation implementations are provided by block 4; we reference them via FP.*
+
+    /* ---- Builder add / reset wiring ---- */
+    $("#f-add").addEventListener("click", () => {
+      const type = $("#f-type").value;
+      const x = $("#f-x").value;
+      const y = $("#f-y").value;
+      const title = $("#f-title").value.trim();
+      if (!x) { alert("Pick an X column."); return; }
+      if (["bar","line","scatter"].includes(type) && !y) { alert("Pick a Y column."); return; }
+      State.charts.push({ id: uid(), type, x, y: y || null, title: title || null, size: "half" });
+      $("#f-title").value = "";
+      renderDashboard();
+      $("#sec-dash").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    $("#f-reset").addEventListener("click", () => {
+      $("#f-title").value = "";
+      populateBuilder();
+    });
+    $("#clear-filters").addEventListener("click", () => { State.filters = []; renderFilters(); renderDashboard(); });
+    $("#clear-dash").addEventListener("click", () => {
+      if (!State.charts.length) return;
+      if (!confirm("Remove all charts from the dashboard?")) return;
+      State.charts = []; renderDashboard();
+    });
+  })();
+  </script>
+
+  <script>
+  /* =============================================================
+     Block 4 — Summary stats, correlation heatmap, PowerSchool preset
+     ============================================================= */
+  (() => {
+    const FP = window.__FP;
+    const { State, $, escapeHtml, fmtNum, toNum, uid } = FP;
+    const { meanOf, medianOf, stdevOf, groupBy } = FP.agg;
+
+    /* ---- Summary stats card renderer ---- */
+    function renderSummaryStats(colName, rows) {
+      const col = State.columns.find(c => c.name === colName);
+      if (!col) return `<div class="muted">Unknown column.</div>`;
+      if (col.type !== "number") return `<div class="muted">Summary stats require a numeric column.</div>`;
+
+      const nums = rows.map(r => toNum(r[colName])).filter(v => v !== null);
+      const nullCount = rows.length - nums.length;
+      if (!nums.length) return `<div class="muted">No numeric values present.</div>`;
+      const mean = nums.reduce((a,b) => a+b, 0) / nums.length;
+      const med = medianOf(nums);
+      const sd = stdevOf(nums);
+      const min = Math.min(...nums), max = Math.max(...nums);
+
+      const stats = [
+        ["Count", nums.length.toLocaleString()],
+        ["Mean", fmtNum(mean, 2)],
+        ["Median", fmtNum(med, 2)],
+        ["Std dev", fmtNum(sd, 2)],
+        ["Min", fmtNum(min, 2)],
+        ["Max", fmtNum(max, 2)],
+        ["Null", nullCount.toLocaleString()],
+      ];
+      return `<div class="stat-grid">${stats.map(([k,v]) => `
+        <div class="stat"><div class="label">${escapeHtml(k)}</div><div class="value">${escapeHtml(String(v))}</div></div>
+      `).join("")}</div>`;
+    }
+
+    /* ---- Pearson correlation ---- */
+    function pearson(xs, ys) {
+      const n = Math.min(xs.length, ys.length);
+      if (n < 3) return null;
+      let sx = 0, sy = 0;
+      for (let i = 0; i < n; i++) { sx += xs[i]; sy += ys[i]; }
+      const mx = sx / n, my = sy / n;
+      let num = 0, dx2 = 0, dy2 = 0;
+      for (let i = 0; i < n; i++) {
+        const a = xs[i] - mx, b = ys[i] - my;
+        num += a * b; dx2 += a * a; dy2 += b * b;
+      }
+      const den = Math.sqrt(dx2 * dy2);
+      if (den === 0) return null;
+      return num / den;
+    }
+
+    /* ---- Correlation heatmap renderer ---- */
+    function renderCorrelationHeatmap(rows) {
+      const numCols = State.columns.filter(c => c.type === "number").map(c => c.name);
+      if (numCols.length < 2) return `<div class="muted">Need at least two numeric columns for a correlation matrix.</div>`;
+
+      // Build value vectors pairwise with pairwise-complete rows
+      const matrix = numCols.map(() => new Array(numCols.length).fill(null));
+      for (let i = 0; i < numCols.length; i++) {
+        for (let j = 0; j < numCols.length; j++) {
+          if (i === j) { matrix[i][j] = 1; continue; }
+          if (j < i) { matrix[i][j] = matrix[j][i]; continue; }
+          const xs = [], ys = [];
+          for (const r of rows) {
+            const a = toNum(r[numCols[i]]);
+            const b = toNum(r[numCols[j]]);
+            if (a !== null && b !== null) { xs.push(a); ys.push(b); }
+          }
+          matrix[i][j] = pearson(xs, ys);
+        }
+      }
+
+      // Color scale: -1 → accent red, 0 → white, +1 → ink black
+      const colorFor = (r) => {
+        if (r === null || isNaN(r)) return "#f2f2f2";
+        const t = Math.max(-1, Math.min(1, r));
+        if (t >= 0) {
+          // white → black
+          const g = Math.round(255 - t * 245);
+          return `rgb(${g},${g},${g})`;
+        } else {
+          // white → accent red
+          const m = -t;
+          const R = Math.round(255 - m * (255 - 228));
+          const G = Math.round(255 - m * 255);
+          const B = Math.round(255 - m * (255 - 43));
+          return `rgb(${R},${G},${B})`;
+        }
+      };
+      const textColorFor = (r) => {
+        if (r === null) return "#6a6a6a";
+        return Math.abs(r) > 0.55 ? "#fff" : "#0a0a0a";
+      };
+
+      const cols = numCols.length;
+      const gridTmpl = `grid-template-columns: 150px repeat(${cols}, minmax(0, 1fr));`;
+
+      const header = `<div class="row" style="${gridTmpl}">
+        <div class="cell col-label"></div>
+        ${numCols.map(n => `<div class="cell col-label" title="${escapeHtml(n)}">${escapeHtml(truncate(n, 10))}</div>`).join("")}
+      </div>`;
+
+      const body = numCols.map((rowName, i) => `
+        <div class="row" style="${gridTmpl}">
+          <div class="cell label" title="${escapeHtml(rowName)}">${escapeHtml(rowName)}</div>
+          ${numCols.map((_, j) => {
+            const r = matrix[i][j];
+            const bg = colorFor(r);
+            const fg = textColorFor(r);
+            const label = (r === null || isNaN(r)) ? "·" : r.toFixed(2);
+            return `<div class="cell" style="background:${bg}; color:${fg};" title="${escapeHtml(numCols[i])} × ${escapeHtml(numCols[j])} = ${label}">${label}</div>`;
+          }).join("")}
+        </div>
+      `).join("");
+
+      // Also: top correlations list
+      const strong = [];
+      for (let i = 0; i < numCols.length; i++) {
+        for (let j = i + 1; j < numCols.length; j++) {
+          const r = matrix[i][j];
+          if (r !== null && !isNaN(r)) strong.push({ a: numCols[i], b: numCols[j], r });
+        }
+      }
+      strong.sort((x, y) => Math.abs(y.r) - Math.abs(x.r));
+      const topList = strong.slice(0, 5).map(s =>
+        `<div style="display:flex; justify-content:space-between; font-family: var(--font-mono); font-size:11px; padding:4px 0; border-bottom:1px solid var(--rule-soft);">
+          <span>${escapeHtml(s.a)} × ${escapeHtml(s.b)}</span>
+          <span style="color:${Math.abs(s.r) > 0.5 ? 'var(--accent)' : 'var(--ink-3)'}">${s.r.toFixed(2)}</span>
+        </div>`).join("");
+
+      return `
+        <div class="heatmap">${header}${body}</div>
+        <div style="margin-top:12px;">
+          <div class="label" style="margin-bottom:6px;">Top correlations</div>
+          ${topList || '<div class="muted" style="font-size:12px;">No pairs.</div>'}
+        </div>
+      `;
+    }
+
+    function truncate(s, n) { return s.length <= n ? s : s.slice(0, n - 1) + "…"; }
+
+    FP.renderSummaryStats = renderSummaryStats;
+    FP.renderCorrelationHeatmap = renderCorrelationHeatmap;
+
+    /* =========================================================
+       PowerSchool preset generator
+       ========================================================= */
+    function findRole(role) { return State.columns.find(c => c.role === role); }
+    function findCluster(cluster) { return State.columns.filter(c => c.cluster === cluster); }
+
+    function generatePowerSchoolPreset() {
+      if (State.mode !== "powerschool") { alert("PowerSchool fields were not detected. Use the chart builder instead."); return; }
+      State.charts = [];
+      const charts = [];
+
+      const gradeCol = findRole("grade_level");
+      const genderCol = findRole("gender");
+      const ethCol = findRole("ethnicity");
+      const gpaCol = findRole("gpa");
+      const attCol = findRole("attendance_pct");
+      const absCol = findRole("absences");
+      const tardyCol = findRole("tardies");
+      const refCol = findRole("referrals");
+      const suspCol = findRole("suspensions");
+      const frlCol = findRole("frl");
+
+      // 01 Cohort — students per grade
+      if (gradeCol) {
+        charts.push({ id: uid(), type: "hbar", x: gradeCol.name, title: "Students per grade level", size: "half", insight: insightCohortByGrade(gradeCol.name) });
+      }
+      // 02 Composition by ethnicity / gender
+      if (ethCol) charts.push({ id: uid(), type: "pie", x: ethCol.name, title: "Composition · " + ethCol.name, size: "third" });
+      if (genderCol) charts.push({ id: uid(), type: "pie", x: genderCol.name, title: "Composition · " + genderCol.name, size: "third" });
+      if (frlCol) charts.push({ id: uid(), type: "pie", x: frlCol.name, title: "Composition · " + frlCol.name, size: "third" });
+
+      // 03 Attendance distribution
+      if (attCol) {
+        charts.push({ id: uid(), type: "histogram", x: attCol.name, title: "Attendance % · distribution", size: "half", insight: insightChronicAbsence(attCol.name) });
+      }
+      // 04 Attendance by grade
+      if (attCol && gradeCol) {
+        charts.push({ id: uid(), type: "bar", x: gradeCol.name, y: attCol.name, title: `Mean attendance by ${gradeCol.name}`, size: "half" });
+      }
+      // 05 GPA distribution
+      if (gpaCol) {
+        charts.push({ id: uid(), type: "histogram", x: gpaCol.name, title: "GPA · distribution", size: "half", insight: insightGpa(gpaCol.name) });
+      }
+      // 06 GPA by grade / demographic
+      if (gpaCol && gradeCol) {
+        charts.push({ id: uid(), type: "bar", x: gradeCol.name, y: gpaCol.name, title: `Mean GPA by ${gradeCol.name}`, size: "half" });
+      }
+      // 07 Equity lens
+      if (gpaCol && ethCol) charts.push({ id: uid(), type: "bar", x: ethCol.name, y: gpaCol.name, title: `Mean GPA by ${ethCol.name}`, size: "half", insight: insightEquity(gpaCol.name, ethCol.name) });
+      if (attCol && frlCol) charts.push({ id: uid(), type: "bar", x: frlCol.name, y: attCol.name, title: `Mean attendance by ${frlCol.name}`, size: "half" });
+
+      // 08 Scatter: attendance × GPA
+      if (attCol && gpaCol) {
+        charts.push({ id: uid(), type: "scatter", x: attCol.name, y: gpaCol.name, title: `${gpaCol.name} vs ${attCol.name}`, size: "half", insight: insightScatter(attCol.name, gpaCol.name) });
+      }
+
+      // 09 Behavior
+      if (refCol) charts.push({ id: uid(), type: "histogram", x: refCol.name, title: "Referrals · distribution", size: "third" });
+      if (suspCol) charts.push({ id: uid(), type: "histogram", x: suspCol.name, title: "Suspensions · distribution", size: "third" });
+      if (tardyCol) charts.push({ id: uid(), type: "histogram", x: tardyCol.name, title: "Tardies · distribution", size: "third" });
+
+      // 10 Correlation heatmap — wide
+      const numCount = State.columns.filter(c => c.type === "number").length;
+      if (numCount >= 3) {
+        charts.push({ id: uid(), type: "correlation", title: "Correlation matrix", size: "wide", insight: "Pearson r across numeric fields. Cells darker (toward black) = stronger positive, redder = stronger negative. Large gaps worth investigating, never interpret as causal." });
+      }
+
+      // 11 Summary cards for flagship numerics
+      for (const roleName of ["gpa","attendance_pct","absences"]) {
+        const c = findRole(roleName);
+        if (c) charts.push({ id: uid(), type: "summary", x: c.name, title: `Summary · ${c.name}`, size: "third" });
+      }
+
+      State.charts = charts;
+      FP.renderDashboard();
+      $("#sec-dash").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    /* ---- Insight generators (plain-language callouts) ---- */
+    function insightCohortByGrade(col) {
+      const g = groupBy(State.rows, col);
+      const total = State.rows.length;
+      const entries = [...g.entries()].sort((a,b) => b[1].length - a[1].length);
+      const top = entries[0];
+      return `Total ${total.toLocaleString()} students across ${entries.length} grade levels. Largest: ${top[0]} (${top[1].length}).`;
+    }
+    function insightChronicAbsence(attCol) {
+      const nums = State.rows.map(r => toNum(r[attCol])).filter(v => v !== null);
+      if (!nums.length) return "";
+      const chronic = nums.filter(n => n < 90).length;
+      const pct = chronic / nums.length * 100;
+      return `${chronic} of ${nums.length} students (${pct.toFixed(1)}%) are below the 90% attendance threshold commonly flagged as chronic.`;
+    }
+    function insightGpa(col) {
+      const nums = State.rows.map(r => toNum(r[col])).filter(v => v !== null);
+      if (!nums.length) return "";
+      const mean = nums.reduce((a,b) => a+b, 0) / nums.length;
+      const failing = nums.filter(n => n < 2.0).length;
+      return `Mean ${col} = ${fmtNum(mean, 2)}. ${failing} students below a 2.0 threshold.`;
+    }
+    function insightEquity(gpaCol, groupCol) {
+      const g = groupBy(State.rows, groupCol);
+      const means = [...g.entries()].map(([k, rows]) => [k, meanOf(rows, gpaCol)]).filter(x => x[1] !== null);
+      if (means.length < 2) return "";
+      means.sort((a,b) => b[1] - a[1]);
+      const hi = means[0], lo = means[means.length - 1];
+      return `Gap: ${hi[0]} (${fmtNum(hi[1], 2)}) vs ${lo[0]} (${fmtNum(lo[1], 2)}) = ${fmtNum(hi[1] - lo[1], 2)} ${gpaCol} difference.`;
+    }
+    function insightScatter(xCol, yCol) {
+      const xs = [], ys = [];
+      for (const r of State.rows) {
+        const a = toNum(r[xCol]), b = toNum(r[yCol]);
+        if (a !== null && b !== null) { xs.push(a); ys.push(b); }
+      }
+      const r = pearson(xs, ys);
+      if (r === null) return "";
+      const strength = Math.abs(r) > 0.6 ? "strong" : Math.abs(r) > 0.3 ? "moderate" : "weak";
+      const dir = r >= 0 ? "positive" : "negative";
+      return `Pearson r = ${r.toFixed(2)} (${strength} ${dir} relationship). Not causal.`;
+    }
+
+    $("#ps-preset-btn").addEventListener("click", generatePowerSchoolPreset);
+    FP.generatePowerSchoolPreset = generatePowerSchoolPreset;
+  })();
+  </script>
+
+  <script>
+  /* =============================================================
+     Block 5 — Export: PNG, clipboard, PDF
+     ============================================================= */
+  (() => {
+    const FP = window.__FP;
+    const { State, $, fmtNum, toNum } = FP;
+
+    const statusEl = $("#export-status");
+    function status(msg) { statusEl.textContent = msg; }
+
+    function snapshotTarget() {
+      // Capture the dashboard section (toolbar + canvas). Fall back to full dash grid.
+      return $("#sec-dash .sec-wide") || $("#dash");
+    }
+
+    async function renderSnapshot() {
+      const target = snapshotTarget();
+      if (!target || !State.charts.length) {
+        alert("Nothing to export — add at least one chart to the dashboard.");
+        return null;
+      }
+      status("Rendering snapshot…");
+      const canvas = await html2canvas(target, {
+        backgroundColor: "#fafaf7",
+        scale: 2,
+        useCORS: true,
+        logging: false,
+      });
+      return canvas;
+    }
+
+    async function copyToClipboard() {
+      try {
+        const canvas = await renderSnapshot();
+        if (!canvas) return;
+        canvas.toBlob(async (blob) => {
+          try {
+            if (!navigator.clipboard || !window.ClipboardItem) throw new Error("Clipboard API unavailable");
+            await navigator.clipboard.write([ new ClipboardItem({ "image/png": blob }) ]);
+            status("Copied. Paste into Docs, Slides, Word, or email.");
+          } catch (err) {
+            // Fallback: trigger a PNG download
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url; a.download = fileBase() + ".png";
+            a.click();
+            URL.revokeObjectURL(url);
+            status("Clipboard blocked by your browser — downloaded a PNG instead.");
+          }
+        }, "image/png");
+      } catch (err) {
+        status("Copy failed: " + err.message);
+      }
+    }
+
+    async function downloadPng() {
+      try {
+        const canvas = await renderSnapshot();
+        if (!canvas) return;
+        const url = canvas.toDataURL("image/png");
+        const a = document.createElement("a");
+        a.href = url; a.download = fileBase() + ".png";
+        a.click();
+        status("PNG downloaded.");
+      } catch (err) {
+        status("PNG failed: " + err.message);
+      }
+    }
+
+    function fileBase() {
+      const t = ($("#report-title").value || "free-period-dashboard").trim().toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 48);
+      const d = new Date().toISOString().slice(0, 10);
+      return `${t || "free-period-dashboard"}-${d}`;
+    }
+
+    /* ---- Executive summary: top correlations, outliers ---- */
+    function buildExecSummary() {
+      const out = [];
+      const numCols = State.columns.filter(c => c.type === "number").map(c => c.name);
+      // Top Pearson correlations
+      if (numCols.length >= 2) {
+        const pairs = [];
+        for (let i = 0; i < numCols.length; i++) {
+          for (let j = i + 1; j < numCols.length; j++) {
+            const xs = [], ys = [];
+            for (const r of State.rows) {
+              const a = toNum(r[numCols[i]]), b = toNum(r[numCols[j]]);
+              if (a !== null && b !== null) { xs.push(a); ys.push(b); }
+            }
+            const n = xs.length;
+            if (n < 3) continue;
+            let sx = 0, sy = 0;
+            for (let k = 0; k < n; k++) { sx += xs[k]; sy += ys[k]; }
+            const mx = sx / n, my = sy / n;
+            let num = 0, dx2 = 0, dy2 = 0;
+            for (let k = 0; k < n; k++) { const dx = xs[k]-mx, dy = ys[k]-my; num += dx*dy; dx2 += dx*dx; dy2 += dy*dy; }
+            const den = Math.sqrt(dx2 * dy2);
+            if (!den) continue;
+            pairs.push({ a: numCols[i], b: numCols[j], r: num / den });
+          }
+        }
+        pairs.sort((x, y) => Math.abs(y.r) - Math.abs(x.r));
+        for (const p of pairs.slice(0, 3)) {
+          out.push(`Strong relationship: ${p.a} × ${p.b} (r = ${p.r.toFixed(2)}).`);
+        }
+      }
+      // Basic cohort stat
+      out.push(`Dataset: ${State.rows.length.toLocaleString()} rows across ${State.columns.length} columns.`);
+      return out;
+    }
+
+    /* ---- PDF export using jsPDF ---- */
+    async function downloadPdf() {
+      try {
+        if (!State.charts.length) {
+          alert("Nothing to export — add at least one chart to the dashboard.");
+          return;
+        }
+        status("Building PDF…");
+        // Access jsPDF via the UMD window global. jspdf@2 exposes it as window.jspdf.jsPDF.
+        const { jsPDF } = window.jspdf || {};
+        if (!jsPDF) { alert("PDF library failed to load."); return; }
+
+        const canvas = await renderSnapshot();
+        if (!canvas) return;
+
+        const pdf = new jsPDF({ orientation: "portrait", unit: "pt", format: "letter" });
+        const pageW = pdf.internal.pageSize.getWidth();
+        const pageH = pdf.internal.pageSize.getHeight();
+        const margin = 48;
+
+        // ---- Cover page ----
+        const title = ($("#report-title").value || "Free Period — Dashboard Report").trim();
+        const today = new Date().toISOString().slice(0, 10);
+
+        // Top rule
+        pdf.setDrawColor(10); pdf.setLineWidth(1.5);
+        pdf.line(margin, margin, pageW - margin, margin);
+
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(10);
+        pdf.setTextColor(120);
+        pdf.text("FREE PERIOD  /  LOCAL-FIRST SCHOOL DATA DASHBOARD", margin, margin + 18);
+
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(28);
+        pdf.setTextColor(10);
+        const titleLines = pdf.splitTextToSize(title, pageW - margin * 2);
+        pdf.text(titleLines, margin, margin + 80);
+
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(10);
+        pdf.setTextColor(60);
+        pdf.text(`Generated ${today}  ·  ${State.rows.length.toLocaleString()} rows  ·  ${State.columns.length} columns  ·  Mode: ${State.mode}`, margin, margin + 116);
+
+        // Executive summary
+        pdf.setFont("helvetica", "bold"); pdf.setFontSize(11); pdf.setTextColor(10);
+        pdf.text("Executive summary", margin, margin + 170);
+        pdf.setDrawColor(10); pdf.setLineWidth(0.5); pdf.line(margin, margin + 176, pageW - margin, margin + 176);
+
+        pdf.setFont("helvetica", "normal"); pdf.setFontSize(11); pdf.setTextColor(30);
+        let y = margin + 196;
+        const summary = buildExecSummary();
+        for (const s of summary) {
+          const lines = pdf.splitTextToSize("— " + s, pageW - margin * 2);
+          pdf.text(lines, margin, y);
+          y += lines.length * 14 + 4;
+          if (y > pageH - margin) break;
+        }
+
+        // Filters applied
+        if (State.filters.length) {
+          y += 10;
+          pdf.setFont("helvetica", "bold"); pdf.setFontSize(11);
+          pdf.text("Filters applied", margin, y); y += 14;
+          pdf.setFont("helvetica", "normal");
+          for (const f of State.filters) {
+            pdf.text("— " + f.label, margin, y); y += 14;
+          }
+        }
+
+        // Bottom rule + footer
+        pdf.setDrawColor(10); pdf.setLineWidth(0.5);
+        pdf.line(margin, pageH - margin, pageW - margin, pageH - margin);
+        pdf.setFontSize(9); pdf.setTextColor(120);
+        pdf.text("Generated locally. No data transmitted.", margin, pageH - margin + 16);
+
+        // ---- Dashboard page(s) ----
+        pdf.addPage();
+        const img = canvas.toDataURL("image/png");
+        const maxW = pageW - margin * 2;
+        const maxH = pageH - margin * 2 - 24;
+        const ratio = canvas.width / canvas.height;
+        let w = maxW, h = maxW / ratio;
+        if (h > maxH) { h = maxH; w = maxH * ratio; }
+        pdf.setFont("helvetica", "bold"); pdf.setFontSize(10); pdf.setTextColor(120);
+        pdf.text("DASHBOARD", margin, margin + 2);
+        pdf.addImage(img, "PNG", margin, margin + 16, w, h);
+
+        // ---- Appendix: summary stats table ----
+        pdf.addPage();
+        pdf.setFont("helvetica", "bold"); pdf.setFontSize(10); pdf.setTextColor(120);
+        pdf.text("APPENDIX  /  SUMMARY STATISTICS", margin, margin + 2);
+
+        pdf.setDrawColor(10); pdf.setLineWidth(0.5);
+        pdf.line(margin, margin + 10, pageW - margin, margin + 10);
+
+        pdf.setFont("helvetica", "bold"); pdf.setFontSize(10); pdf.setTextColor(10);
+        const headers = ["Column", "Type", "Count", "Mean", "Median", "Min", "Max", "Null"];
+        const colsXPct = [0.00, 0.28, 0.40, 0.50, 0.60, 0.70, 0.80, 0.92];
+        const tableW = pageW - margin * 2;
+        const colsX = colsXPct.map(p => margin + p * tableW);
+        let ry = margin + 30;
+        headers.forEach((h, i) => pdf.text(h, colsX[i], ry));
+        ry += 6;
+        pdf.line(margin, ry, pageW - margin, ry); ry += 12;
+
+        pdf.setFont("helvetica", "normal"); pdf.setFontSize(9); pdf.setTextColor(30);
+        for (const c of State.columns) {
+          if (ry > pageH - margin - 20) {
+            pdf.addPage();
+            pdf.setFont("helvetica", "bold"); pdf.setFontSize(10); pdf.setTextColor(120);
+            pdf.text("APPENDIX  /  SUMMARY STATISTICS (CONT.)", margin, margin + 2);
+            pdf.setDrawColor(10); pdf.setLineWidth(0.5); pdf.line(margin, margin + 10, pageW - margin, margin + 10);
+            pdf.setFont("helvetica", "normal"); pdf.setFontSize(9); pdf.setTextColor(30);
+            ry = margin + 30;
+          }
+          let mean = "—", med = "—", min = "—", max = "—";
+          const count = State.rows.length - c.nullCount;
+          if (c.type === "number") {
+            const nums = State.rows.map(r => toNum(r[c.name])).filter(v => v !== null);
+            if (nums.length) {
+              const m = nums.reduce((a,b) => a+b, 0) / nums.length;
+              const sorted = [...nums].sort((a,b) => a-b);
+              const md = sorted.length % 2 ? sorted[(sorted.length-1)/2] : (sorted[sorted.length/2 - 1] + sorted[sorted.length/2]) / 2;
+              mean = fmtNum(m, 2); med = fmtNum(md, 2); min = fmtNum(Math.min(...nums), 2); max = fmtNum(Math.max(...nums), 2);
+            }
+          }
+          const row = [truncate(c.name, 22), c.type, String(count), mean, med, min, max, String(c.nullCount)];
+          row.forEach((v, i) => pdf.text(String(v), colsX[i], ry));
+          ry += 12;
+        }
+
+        // Footer on last page
+        pdf.setDrawColor(10); pdf.setLineWidth(0.5);
+        pdf.line(margin, pageH - margin, pageW - margin, pageH - margin);
+        pdf.setFontSize(9); pdf.setTextColor(120);
+        pdf.text("Generated locally. No data transmitted. · " + today, margin, pageH - margin + 16);
+
+        pdf.save(fileBase() + ".pdf");
+        status("PDF downloaded.");
+      } catch (err) {
+        console.error(err);
+        status("PDF failed: " + err.message);
+      }
+    }
+
+    function truncate(s, n) { s = String(s); return s.length <= n ? s : s.slice(0, n - 1) + "…"; }
+
+    $("#btn-copy").addEventListener("click", copyToClipboard);
+    $("#btn-png").addEventListener("click", downloadPng);
+    $("#btn-pdf").addEventListener("click", downloadPdf);
+  })();
+  </script>
+</body>
+</html>
