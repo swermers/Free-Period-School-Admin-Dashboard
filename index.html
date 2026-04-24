@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Free Period — a zero-backend, privacy-first school data dashboard. Upload a CSV, get instant visualizations. Nothing leaves your browser.">
+  <meta name="description" content="School Admin Dashboard by Free Period — a zero-backend, privacy-first school data dashboard. Upload a CSV, get instant visualizations. Nothing leaves your browser.">
   <meta name="color-scheme" content="light">
   <!--
     Content Security Policy: block arbitrary network calls. Scripts and styles
@@ -22,7 +22,7 @@
     form-action 'none';
     frame-ancestors 'none';
   ">
-  <title>Free Period — Local-First School Data Dashboard</title>
+  <title>School Admin Dashboard — by Free Period</title>
 
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -428,12 +428,12 @@
 
   <!-- ================= Topbar ================= -->
   <header class="topbar">
-    <a class="brand" href="#" aria-label="Free Period home">
+    <a class="brand" href="#" aria-label="School Admin Dashboard — by Free Period">
       <span class="mark" aria-hidden="true"></span>
-      <span>Free Period</span>
+      <span>School Admin Dashboard <span style="color: var(--ink-3); font-weight: 400;">· by Free Period</span></span>
     </a>
     <div class="meta">
-      <span class="label">Local-First Dashboard · v0.1</span>
+      <span class="label">v0.1</span>
       <span class="pill"><span class="dot" aria-hidden="true"></span>No data transmitted</span>
       <button class="btn ghost small" id="reset-all" type="button" title="Clear data and start over">Reset</button>
     </div>
@@ -442,7 +442,7 @@
   <!-- ================= Hero ================= -->
   <section class="hero">
     <div class="kicker">
-      <span class="label">FP / Tools / 01</span>
+      <span class="label">School Admin Dashboard / by Free Period</span>
       <span class="bar" aria-hidden="true"></span>
       <span class="label mono" id="today-date"></span>
     </div>
@@ -640,7 +640,7 @@
   <!-- ================= Footer ================= -->
   <footer class="foot">
     <div class="one">
-      <div class="label" style="margin-bottom:8px;">Free Period</div>
+      <div class="label" style="margin-bottom:8px;">School Admin Dashboard · by Free Period</div>
       <div>A zero-backend, privacy-first dashboard for school administrators and counselors. Ed-tech for teachers building with AI.</div>
     </div>
     <div class="two">
@@ -1718,10 +1718,10 @@
     }
 
     function fileBase() {
-      const t = ($("#report-title").value || "free-period-dashboard").trim().toLowerCase()
+      const t = ($("#report-title").value || "school-admin-dashboard").trim().toLowerCase()
         .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 48);
       const d = new Date().toISOString().slice(0, 10);
-      return `${t || "free-period-dashboard"}-${d}`;
+      return `${t || "school-admin-dashboard"}-${d}`;
     }
 
     /* ---- Executive summary: top correlations, outliers ---- */
@@ -1781,7 +1781,7 @@
         const margin = 48;
 
         // ---- Cover page ----
-        const title = ($("#report-title").value || "Free Period — Dashboard Report").trim();
+        const title = ($("#report-title").value || "School Admin Dashboard — Report").trim();
         const today = new Date().toISOString().slice(0, 10);
 
         // Top rule
@@ -1791,7 +1791,7 @@
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(10);
         pdf.setTextColor(120);
-        pdf.text("FREE PERIOD  /  LOCAL-FIRST SCHOOL DATA DASHBOARD", margin, margin + 18);
+        pdf.text("SCHOOL ADMIN DASHBOARD  /  BY FREE PERIOD", margin, margin + 18);
 
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(28);
