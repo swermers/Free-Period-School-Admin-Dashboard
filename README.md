@@ -1,7 +1,7 @@
 # Free-Period-School-Admin-Dashboard
 A zero-backend, privacy-first data visualization tool for school administrators and counselors.
 
-# Free Period: Local-First School Data Dashboard
+# School Admin Dashboard — by Free Period
 
 **A zero-backend, privacy-first data visualization tool for school administrators and counselors.**
 

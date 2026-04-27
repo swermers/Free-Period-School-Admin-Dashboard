@@ -1,6 +1,6 @@
-# School Data Dashboard — Comprehensive Architecture Plan
+# School Admin Dashboard — Comprehensive Architecture Plan
 
-**Project:** Free Period — Privacy-First School Data Visualization Tool
+**Project:** School Admin Dashboard — by Free Period
 **Author:** Shayne (LAS)
 **Build Target:** One-shot Claude Code implementation
 **Deliverable:** Single-file HTML application with embedded JS, zero backend, zero login
